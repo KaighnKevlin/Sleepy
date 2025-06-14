@@ -28,6 +28,7 @@ python test_sleeper_api.py
 
 ## Important Notes for Claude Code
 - **Server Management**: When starting the server programmatically, use the `nohup + disown` command to prevent the Bash tool from hanging indefinitely. Standard background operations with `&` still cause the tool to wait for process output.
+- **Development Workflow**: Whenever you finish a feature, commit and push the changes to maintain version control.
 
 ## Project Structure
 - `core/` - Main Django app with models, services, and admin
