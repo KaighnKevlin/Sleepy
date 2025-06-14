@@ -109,6 +109,9 @@ const MyLeague: React.FC = () => {
   }
 
   const { user, league, roster } = rosterData;
+  
+  // Check if league is pre-draft (no players drafted yet)
+  const isPreDraft = roster.players.length === 0;
 
   return (
     <div className="space-y-6">
@@ -128,56 +131,141 @@ const MyLeague: React.FC = () => {
           <div className="text-right">
             <p className="text-lg font-semibold text-gray-900">{user.display_name}</p>
             <p className="text-gray-600">Roster {roster.roster_id}</p>
-            <p className="text-sm text-gray-500">{roster.total_players} players</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Roster Display */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Starting Lineup */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Starting Lineup</h2>
-          <div className="space-y-3">
-            {roster.starters.length > 0 ? (
-              roster.starters.map(player => renderPlayer(player, true))
+            {isPreDraft ? (
+              <div className="space-y-1">
+                <p className="text-sm text-orange-600 font-medium">Pre-Draft</p>
+                <p className="text-xs text-gray-500">Draft hasn't started yet</p>
+              </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No starters set</p>
+              <p className="text-sm text-gray-500">{roster.total_players} players</p>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Bench */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">
-            Bench ({roster.players.length - roster.starters.length})
-          </h2>
-          <div className="space-y-3 max-h-96 overflow-y-auto">
-            {roster.players
-              .filter(player => !roster.starters.find(starter => starter.player_id === player.player_id))
-              .map(player => renderPlayer(player, false))
-            }
+      {isPreDraft ? (
+        /* Pre-Draft Display */
+        <div className="space-y-6">
+          {/* Draft Information */}
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-orange-800 mb-2">Draft Pending</h2>
+              <p className="text-orange-700 mb-4">
+                The Dynasty Warriors draft hasn't started yet. Once the draft begins, your roster will appear here.
+              </p>
+              <div className="inline-flex items-center space-x-2 text-sm text-orange-600">
+                <span className="w-2 h-2 bg-orange-400 rounded-full animate-pulse"></span>
+                <span>Waiting for draft to begin...</span>
+              </div>
+            </div>
+          </div>
+
+          {/* League Setup Info */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">League Setup</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-medium text-gray-900 mb-3">Starting Lineup</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Quarterback</span>
+                    <span className="font-medium">1</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Running Back</span>
+                    <span className="font-medium">2</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Wide Receiver</span>
+                    <span className="font-medium">3</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tight End</span>
+                    <span className="font-medium">1</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Flex (RB/WR/TE)</span>
+                    <span className="font-medium">2</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Superflex (QB/RB/WR/TE)</span>
+                    <span className="font-medium">1</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <h3 className="font-medium text-gray-900 mb-3">Roster Limits</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Total Roster Size</span>
+                    <span className="font-medium">26 players</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Starting Lineup</span>
+                    <span className="font-medium">10 players</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Bench</span>
+                    <span className="font-medium">16 players</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Reserve/IR</span>
+                    <span className="font-medium">2 players</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* Post-Draft Roster Display */
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Starting Lineup */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">Starting Lineup</h2>
+            <div className="space-y-3">
+              {roster.starters.length > 0 ? (
+                roster.starters.map(player => renderPlayer(player, true))
+              ) : (
+                <p className="text-gray-500 text-center py-8">No starters set</p>
+              )}
+            </div>
+          </div>
 
-      {/* Roster Composition */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Roster Composition</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(position => {
-            const count = roster.players.filter(player => player.position === position).length;
-            return (
-              <div key={position} className="text-center p-3 bg-gray-50 rounded-lg">
-                <div className={`w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center text-sm font-medium ${getPositionColor(position)}`}>
-                  {count}
-                </div>
-                <p className="text-sm font-medium text-gray-900">{position}</p>
-              </div>
-            );
-          })}
+          {/* Bench */}
+          <div className="bg-white rounded-lg shadow p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900">
+              Bench ({roster.players.length - roster.starters.length})
+            </h2>
+            <div className="space-y-3 max-h-96 overflow-y-auto">
+              {roster.players
+                .filter(player => !roster.starters.find(starter => starter.player_id === player.player_id))
+                .map(player => renderPlayer(player, false))
+              }
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Roster Composition - Only show if post-draft */}
+      {!isPreDraft && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Roster Composition</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {['QB', 'RB', 'WR', 'TE', 'K', 'DEF'].map(position => {
+              const count = roster.players.filter(player => player.position === position).length;
+              return (
+                <div key={position} className="text-center p-3 bg-gray-50 rounded-lg">
+                  <div className={`w-8 h-8 mx-auto mb-2 rounded-full flex items-center justify-center text-sm font-medium ${getPositionColor(position)}`}>
+                    {count}
+                  </div>
+                  <p className="text-sm font-medium text-gray-900">{position}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
