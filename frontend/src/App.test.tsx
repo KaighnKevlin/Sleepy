@@ -14,7 +14,9 @@ test('renders navigation tabs', () => {
   expect(screen.getByText('User Lookup')).toBeInTheDocument();
 });
 
-test('renders trending players by default', () => {
+test('renders my league by default', () => {
   render(<App />);
-  expect(screen.getAllByText(/Trending/)).toHaveLength(3); // 2 components + 1 tab
+  expect(screen.getByText('My League')).toBeInTheDocument();
+  expect(screen.getByText('Trending Players')).toBeInTheDocument();
+  expect(screen.getByText('User Lookup')).toBeInTheDocument();
 });

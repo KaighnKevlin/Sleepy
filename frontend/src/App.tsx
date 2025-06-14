@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import TrendingPlayers from './components/TrendingPlayers';
 import UserLookup from './components/UserLookup';
+import MyLeague from './components/MyLeague';
+import { LEAGUE_CONFIG } from './config/league';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'trending' | 'lookup'>('trending');
+  const [activeTab, setActiveTab] = useState<'my-league' | 'trending' | 'lookup'>('my-league');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,7 +20,7 @@ function App() {
               </span>
             </div>
             <div className="text-sm text-gray-500">
-              Dynasty • Double Flex • Sleeper.io
+              {LEAGUE_CONFIG.league_name} • {LEAGUE_CONFIG.season}
             </div>
           </div>
         </div>
@@ -28,6 +30,16 @@ function App() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('my-league')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'my-league'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              My League
+            </button>
             <button
               onClick={() => setActiveTab('trending')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
@@ -54,6 +66,8 @@ function App() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {activeTab === 'my-league' && <MyLeague />}
+        
         {activeTab === 'trending' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             <TrendingPlayers type="add" limit={10} />
