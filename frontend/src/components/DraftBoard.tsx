@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import RosterTracker from './RosterTracker';
+import BestAvailable from './BestAvailable';
 
 interface Player {
   id: string;
@@ -30,6 +32,8 @@ const DraftBoard: React.FC = () => {
   const [selectedPosition, setSelectedPosition] = useState<string>('ALL');
   const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(true);
   const [yourPickPosition, setYourPickPosition] = useState<number>(8); // Dynasty Warriors roster 8
+  const [showRosterTracker, setShowRosterTracker] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<'board' | 'best-available'>('board');
 
   // Initialize draft picks for 12-team league, 26 rounds
   useEffect(() => {
@@ -106,12 +110,15 @@ const DraftBoard: React.FC = () => {
   }, []);
 
   const draftPlayer = (playerId: string, draftedBy: string = 'Unknown') => {
+    const currentPickInfo = getCurrentPickInfo();
+    const isYourPick = currentPickInfo?.isYourPick || false;
+    
     setPlayers(prev => prev.map(p => 
       p.id === playerId 
         ? { 
             ...p, 
             isDrafted: true, 
-            draftedBy,
+            draftedBy: isYourPick ? 'You' : draftedBy,
             draftRound: Math.ceil(currentPick / 12),
             draftPick: currentPick 
           }
@@ -139,6 +146,8 @@ const DraftBoard: React.FC = () => {
     const availableMatch = !showOnlyAvailable || !player.isDrafted;
     return positionMatch && availableMatch;
   });
+
+  const yourDraftedPlayers = players.filter(player => player.isDrafted && player.draftedBy === 'You');
 
   const getTierColor = (tier: number) => {
     switch (tier) {
@@ -222,6 +231,17 @@ const DraftBoard: React.FC = () => {
         <div className="flex flex-wrap gap-4 items-center justify-between">
           <div className="flex flex-wrap gap-4">
             <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">View Mode</label>
+              <select
+                value={viewMode}
+                onChange={(e) => setViewMode(e.target.value as 'board' | 'best-available')}
+                className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+              >
+                <option value="board">Draft Board</option>
+                <option value="best-available">Best Available</option>
+              </select>
+            </div>
+            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
               <select
                 value={selectedPosition}
@@ -247,6 +267,18 @@ const DraftBoard: React.FC = () => {
                 Show only available players
               </label>
             </div>
+            <div className="flex items-center space-x-2 mt-6">
+              <input
+                type="checkbox"
+                id="show-roster-tracker"
+                checked={showRosterTracker}
+                onChange={(e) => setShowRosterTracker(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="show-roster-tracker" className="text-sm text-gray-700">
+                Show roster tracker
+              </label>
+            </div>
           </div>
           <div className="text-sm text-gray-600">
             <span className="font-medium">{players.filter(p => !p.isDrafted).length}</span> players available
@@ -254,9 +286,26 @@ const DraftBoard: React.FC = () => {
         </div>
       </div>
 
-      {/* Player List */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold mb-4 text-gray-900">Players</h2>
+      {/* Roster Tracker */}
+      {showRosterTracker && (
+        <RosterTracker 
+          draftedPlayers={yourDraftedPlayers}
+          currentRound={Math.ceil(currentPick / 12)}
+          totalRounds={26}
+        />
+      )}
+
+      {/* Content based on view mode */}
+      {viewMode === 'best-available' ? (
+        <BestAvailable 
+          players={players}
+          onDraftPlayer={draftPlayer}
+          currentPickInfo={currentPickInfo}
+        />
+      ) : (
+        /* Player List */
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-xl font-bold mb-4 text-gray-900">Players</h2>
         <div className="space-y-2 max-h-96 overflow-y-auto">
           {filteredPlayers.map((player) => (
             <div 
@@ -329,6 +378,7 @@ const DraftBoard: React.FC = () => {
           ))}
         </div>
       </div>
+      )}
     </div>
   );
 };
