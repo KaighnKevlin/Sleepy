@@ -121,7 +121,8 @@ def get_league_roster(request, sleeper_username, league_id):
     
     if players_data:
         # Get details for all roster players
-        for player_id in roster_summary.get('players', []):
+        player_ids = roster_summary.get('players') or []
+        for player_id in player_ids:
             if player_id in players_data:
                 player_info = players_data[player_id]
                 player_detail = {
@@ -134,7 +135,8 @@ def get_league_roster(request, sleeper_username, league_id):
                 roster_players.append(player_detail)
         
         # Get details for starter players
-        for player_id in roster_summary.get('starters', []):
+        starter_ids = roster_summary.get('starters') or []
+        for player_id in starter_ids:
             if player_id and player_id in players_data:
                 player_info = players_data[player_id]
                 starter_detail = {
