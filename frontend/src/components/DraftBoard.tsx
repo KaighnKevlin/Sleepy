@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import RosterTracker from './RosterTracker';
 import BestAvailable from './BestAvailable';
+import AdvancedAnalytics from './AdvancedAnalytics';
+import DraftHistory from './DraftHistory';
+import TradeCalculator from './TradeCalculator';
 
 interface Player {
   id: string;
@@ -33,7 +36,7 @@ const DraftBoard: React.FC = () => {
   const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(true);
   const [yourPickPosition, setYourPickPosition] = useState<number>(8); // Dynasty Warriors roster 8
   const [showRosterTracker, setShowRosterTracker] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<'board' | 'best-available'>('board');
+  const [viewMode, setViewMode] = useState<'board' | 'best-available' | 'analytics' | 'history' | 'trade'>('board');
 
   // Initialize draft picks for 12-team league, 26 rounds
   useEffect(() => {
@@ -234,11 +237,14 @@ const DraftBoard: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-1">View Mode</label>
               <select
                 value={viewMode}
-                onChange={(e) => setViewMode(e.target.value as 'board' | 'best-available')}
+                onChange={(e) => setViewMode(e.target.value as 'board' | 'best-available' | 'analytics' | 'history' | 'trade')}
                 className="border border-gray-300 rounded-md px-3 py-2 text-sm"
               >
                 <option value="board">Draft Board</option>
                 <option value="best-available">Best Available</option>
+                <option value="analytics">Advanced Analytics</option>
+                <option value="history">Draft History</option>
+                <option value="trade">Trade Calculator</option>
               </select>
             </div>
             <div>
@@ -302,6 +308,21 @@ const DraftBoard: React.FC = () => {
           onDraftPlayer={draftPlayer}
           currentPickInfo={currentPickInfo}
         />
+      ) : viewMode === 'analytics' ? (
+        <AdvancedAnalytics
+          players={players}
+          currentPick={currentPick}
+          onPlayerSelect={draftPlayer}
+        />
+      ) : viewMode === 'history' ? (
+        <DraftHistory
+          players={players}
+          currentPick={currentPick}
+          totalTeams={12}
+          totalRounds={26}
+        />
+      ) : viewMode === 'trade' ? (
+        <TradeCalculator />
       ) : (
         /* Player List */
         <div className="bg-white rounded-lg shadow p-6">
