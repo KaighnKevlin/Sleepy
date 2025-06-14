@@ -224,3 +224,126 @@ def health_check(request):
         'status': 'healthy',
         'message': 'Sleepy API is running'
     })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_league_drafts(request, league_id):
+    """Get all drafts for a league"""
+    api_service = SleeperAPIService()
+    
+    drafts_data = api_service.get_league_drafts(league_id)
+    if not drafts_data:
+        return Response(
+            {'error': 'Unable to fetch drafts for this league'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    return Response({
+        'league_id': league_id,
+        'drafts': drafts_data
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_draft_details(request, draft_id):
+    """Get specific draft information and picks"""
+    api_service = SleeperAPIService()
+    
+    # Get draft info
+    draft_data = api_service.get_draft(draft_id)
+    if not draft_data:
+        return Response(
+            {'error': 'Draft not found'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get draft picks
+    picks_data = api_service.get_draft_picks(draft_id)
+    
+    # Get traded picks
+    traded_picks_data = api_service.get_draft_traded_picks(draft_id)
+    
+    # Get player details for picks
+    players_data = api_service.get_players_nfl()
+    picks_with_details = []
+    
+    if picks_data and players_data:
+        for pick in picks_data:
+            player_id = pick.get('player_id')
+            pick_detail = {
+                'pick_no': pick.get('pick_no'),
+                'round': pick.get('round'),
+                'roster_id': pick.get('roster_id'),
+                'player_id': player_id,
+                'picked_by': pick.get('picked_by'),
+                'is_keeper': pick.get('is_keeper', False),
+                'metadata': pick.get('metadata', {})
+            }
+            
+            # Add player details if available
+            if player_id and player_id in players_data:
+                player_info = players_data[player_id]
+                pick_detail['player'] = {
+                    'name': f"{player_info.get('first_name', '')} {player_info.get('last_name', '')}".strip(),
+                    'position': player_info.get('position'),
+                    'team': player_info.get('team'),
+                    'age': player_info.get('age'),
+                    'injury_status': player_info.get('injury_status')
+                }
+            
+            picks_with_details.append(pick_detail)
+    
+    return Response({
+        'draft': draft_data,
+        'picks': picks_with_details,
+        'traded_picks': traded_picks_data or []
+    })
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_live_draft(request, league_id):
+    """Get live draft information for a league"""
+    api_service = SleeperAPIService()
+    
+    # Get all drafts for the league
+    drafts_data = api_service.get_league_drafts(league_id)
+    if not drafts_data:
+        return Response(
+            {'error': 'No drafts found for this league'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Find the most recent or active draft
+    current_draft = None
+    for draft in drafts_data:
+        if draft.get('status') in ['drafting', 'complete']:
+            current_draft = draft
+            break
+    
+    if not current_draft:
+        # If no active draft, get the most recent one
+        current_draft = max(drafts_data, key=lambda d: d.get('created', 0))
+    
+    draft_id = current_draft.get('draft_id')
+    
+    # Get detailed draft information
+    try:
+        draft_response = get_draft_details(request, draft_id)
+        draft_data = draft_response.data
+    except Exception as e:
+        # If we can't get draft details, return basic info
+        draft_data = {
+            'draft': current_draft,
+            'picks': [],
+            'traded_picks': []
+        }
+    
+    # Add draft status information
+    draft_data['status'] = current_draft.get('status')
+    draft_data['type'] = current_draft.get('type')
+    draft_data['settings'] = current_draft.get('settings', {})
+    
+    return Response(draft_data)

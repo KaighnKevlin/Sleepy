@@ -73,6 +73,26 @@ class SleeperAPIService:
         return self._make_request(
             f"/players/{sport}/trending/{add_drop}?lookback_hours={hours}&limit={limit}"
         )
+    
+    def get_league_drafts(self, league_id: str) -> Optional[List[Dict]]:
+        """Get all drafts for a league"""
+        return self._make_request(f"/league/{league_id}/drafts")
+    
+    def get_draft(self, draft_id: str) -> Optional[Dict]:
+        """Get specific draft information"""
+        return self._make_request(f"/draft/{draft_id}")
+    
+    def get_draft_picks(self, draft_id: str) -> Optional[List[Dict]]:
+        """Get all picks in a draft"""
+        return self._make_request(f"/draft/{draft_id}/picks")
+    
+    def get_draft_traded_picks(self, draft_id: str) -> Optional[List[Dict]]:
+        """Get all traded picks in a draft"""
+        return self._make_request(f"/draft/{draft_id}/traded_picks")
+    
+    def get_league_traded_picks(self, league_id: str) -> Optional[List[Dict]]:
+        """Get all traded picks in a league (including future picks)"""
+        return self._make_request(f"/league/{league_id}/traded_picks")
 
 
 class SleeperDataService:

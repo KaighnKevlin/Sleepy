@@ -4,6 +4,8 @@ import BestAvailable from './BestAvailable';
 import AdvancedAnalytics from './AdvancedAnalytics';
 import DraftHistory from './DraftHistory';
 import TradeCalculator from './TradeCalculator';
+import LiveDraftManager from './LiveDraftManager';
+import { LiveDraftState, LiveDraftPick } from '../services/liveDraft';
 
 interface Player {
   id: string;
@@ -37,6 +39,8 @@ const DraftBoard: React.FC = () => {
   const [yourPickPosition, setYourPickPosition] = useState<number>(8); // Dynasty Warriors roster 8
   const [showRosterTracker, setShowRosterTracker] = useState<boolean>(false);
   const [viewMode, setViewMode] = useState<'board' | 'best-available' | 'analytics' | 'history' | 'trade'>('board');
+  const [liveDraftState, setLiveDraftState] = useState<LiveDraftState | null>(null);
+  const [isLiveDraftMode, setIsLiveDraftMode] = useState<boolean>(true);
 
   // Initialize draft picks for 12-team league, 26 rounds
   useEffect(() => {
@@ -152,6 +156,58 @@ const DraftBoard: React.FC = () => {
 
   const yourDraftedPlayers = players.filter(player => player.isDrafted && player.draftedBy === 'You');
 
+  // Live draft integration
+  const handleLiveDraftStateChange = (state: LiveDraftState) => {
+    setLiveDraftState(state);
+    setCurrentPick(state.currentPick);
+  };
+
+  const handleLivePicksUpdate = (livePicks: LiveDraftPick[]) => {
+    if (!isLiveDraftMode) return;
+
+    // Update players based on live picks
+    setPlayers(prev => prev.map(player => {
+      // Find matching live pick by player name (more reliable than ID matching)
+      const livePick = livePicks.find(pick => {
+        if (!pick.player?.name) return false;
+        const livePlayerName = pick.player.name.toLowerCase();
+        return livePlayerName === player.name.toLowerCase();
+      });
+      
+      if (livePick) {
+        // Mark as drafted with live data
+        return {
+          ...player,
+          isDrafted: true,
+          draftedBy: livePick.roster_id === 8 ? 'You' : `Team ${livePick.roster_id}`,
+          draftRound: livePick.round,
+          draftPick: livePick.pick_no
+        };
+      }
+      
+      // Check if this player should remain drafted (not in current live picks but was previously drafted)
+      if (player.isDrafted && !livePicks.some(pick => 
+        pick.player?.name?.toLowerCase() === player.name.toLowerCase()
+      )) {
+        // Keep as drafted if this is a player we don't have live data for
+        // This prevents resetting manually tracked picks
+        return player;
+      }
+      
+      return player;
+    }));
+  };
+
+  const toggleLiveDraftMode = () => {
+    setIsLiveDraftMode(!isLiveDraftMode);
+    if (!isLiveDraftMode) {
+      // Reset to live state
+      if (liveDraftState) {
+        handleLivePicksUpdate(liveDraftState.picks);
+      }
+    }
+  };
+
   const getTierColor = (tier: number) => {
     switch (tier) {
       case 1: return 'bg-red-50 border-red-200 text-red-800';
@@ -229,6 +285,12 @@ const DraftBoard: React.FC = () => {
         </div>
       </div>
 
+      {/* Live Draft Manager */}
+      <LiveDraftManager
+        onDraftStateChange={handleLiveDraftStateChange}
+        onPicksUpdate={handleLivePicksUpdate}
+      />
+
       {/* Controls */}
       <div className="bg-white rounded-lg shadow p-6">
         <div className="flex flex-wrap gap-4 items-center justify-between">
@@ -283,6 +345,18 @@ const DraftBoard: React.FC = () => {
               />
               <label htmlFor="show-roster-tracker" className="text-sm text-gray-700">
                 Show roster tracker
+              </label>
+            </div>
+            <div className="flex items-center space-x-2 mt-6">
+              <input
+                type="checkbox"
+                id="live-draft-mode"
+                checked={isLiveDraftMode}
+                onChange={toggleLiveDraftMode}
+                className="rounded border-gray-300"
+              />
+              <label htmlFor="live-draft-mode" className="text-sm text-gray-700">
+                Live draft sync
               </label>
             </div>
           </div>
